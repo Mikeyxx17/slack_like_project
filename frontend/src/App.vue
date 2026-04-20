@@ -81,9 +81,8 @@ const joinChat = () => {
   if (username.value.trim()) {
     isJoined.value = true
     
-    // 建立连接
-    socket = new WebSocket('ws://localhost:3000/ws')
-
+    // socket = new WebSocket('ws://localhost:5173/ws') // 本地开发把这行打开
+    socket = new WebSocket('ws://119.29.224.113:3000/ws') // 部署后把这行打开
     socket.onopen = () => {
       console.log('✅ 成功连接到 Rust 后端服务器！')
     }
