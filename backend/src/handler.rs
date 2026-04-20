@@ -14,6 +14,7 @@ pub async fn ws_handler(ws: Ws, State(state): State<AppState>) -> impl IntoRespo
 }
 
 async fn handle_socket(socket: WebSocket, state: AppState) {
+    // 1. 制作欢迎卡片
     let welcome_msg = ChatMessage {
         id: None,
         channel: "general".to_string(),
@@ -21,6 +22,16 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
         content: "一位新伙伴加入了聊天室".to_string(),
         created_at: Some(chrono::Utc::now()),
     };
+
+    // 2. 🗄️ 新增：将欢迎消息正式登记入库
+    let _ = sqlx::query("INSERT INTO messages (channel, username, content) VALUES ($1, $2, $3)")
+        .bind(&welcome_msg.channel)
+        .bind(&welcome_msg.username)
+        .bind(&welcome_msg.content)
+        .execute(&state.db)
+        .await;
+
+    // 3. 广播给所有人（大喇叭）
     let _ = state.tx.send(welcome_msg);
 
     println!("🔌 一个新的 WebSocket 连接已建立");
@@ -53,7 +64,7 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
                     Some(Ok(msg)) => {
                         if let Message::Text(text) = msg {
                             match serde_json::from_str::<ChatMessage>(&text) {
-                                Ok(parsed_msg) => {
+                                Ok(mut parsed_msg) => {
                                     let db_result = sqlx::query(
                                         "INSERT INTO messages (channel, username, content) VALUES ($1, $2, $3)"
                                     )
@@ -66,6 +77,7 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
                                     if let Err(e) = db_result {
                                         println!("❌ 存入数据库失败: {}", e);
                                     } else {
+                                        parsed_msg.created_at = Some(chrono::Utc::now());
                                         let _ = state.tx.send(parsed_msg);
                                     }
                                 }
