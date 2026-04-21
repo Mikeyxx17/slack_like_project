@@ -10,7 +10,6 @@ use axum::{
     response::IntoResponse,
 };
 use futures::{sink::SinkExt, stream::StreamExt};
-use std::sync::Arc;
 
 pub async fn ws_handler(
     ws: Ws,
