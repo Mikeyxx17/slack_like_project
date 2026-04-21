@@ -62,7 +62,7 @@ const sendMessage = () => {
 
   // 2. 按照后端的“模具”打包数据
   const messageData = {
-    channel: "general",        // 目前先写死为 general
+    channel: "general",       
     username: username.value,  // 使用用户刚进入时填写的名字
     content: newMessage.value  // 使用输入框里的内容
   }

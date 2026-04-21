@@ -11,3 +11,10 @@ pub struct ChatMessage {
     pub content: String,                   // 消息正文
     pub created_at: Option<DateTime<Utc>>, // 时间字段
 }
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct Channel {
+    pub id: i32,
+    pub name: String,
+    pub created_at: DateTime<Utc>,
+}
