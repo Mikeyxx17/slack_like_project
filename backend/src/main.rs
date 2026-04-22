@@ -5,12 +5,13 @@ mod state;
 use axum::{Router, routing::get};
 use dashmap::DashMap;
 use dotenvy::dotenv;
-use handler::ws_handler;
+use handler::{get_channels, ws_handler};
 use sqlx::postgres::PgPoolOptions;
 use state::AppState;
 use std::env;
-use std::sync::Arc; // 👈 修正 1：必须导入 Arc 才能使用
+use std::sync::Arc;
 use tokio::sync::broadcast;
+use tower_http::cors::{Any, CorsLayer};
 
 #[tokio::main]
 async fn main() {
@@ -30,15 +31,16 @@ async fn main() {
         .await
         .expect("数据库迁移失败，请检查 SQL 脚本");
 
-    // 1. 修正 2：初始化空的“频道置物架”。
-    // 注意：删掉了原来那个单频道的 broadcast::channel(100)，不再需要它了。
+    // 初始化空的“频道置物架”。
     let channels = Arc::new(DashMap::new());
-
-    // 2. 修正 3：先组装好 state。
-    // 现在 AppState 结构体里只有 db 和 channels 两个字段。
     let state = AppState { db: pool, channels };
 
-    // 3. 修正 4：利用 state 里的数据库连接去“进货”。
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
+
+    // 🚀 “早晨开店进货”：把数据库里记下来的老频道全捞出来，提前在内存里建好大喇叭
     let saved_channels = sqlx::query!("SELECT name FROM channels")
         .fetch_all(&state.db)
         .await
@@ -53,8 +55,9 @@ async fn main() {
     println!("✅ 已成功加载 {} 个频道", state.channels.len());
 
     let app = Router::new()
-        // 👈 这里的 :channel 是路径参数，对应 URL 里的频道名
         .route("/ws/{channel}", get(ws_handler))
+        .route("/api/channels", get(get_channels))
+        .layer(cors)
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();

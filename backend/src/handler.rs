@@ -1,5 +1,6 @@
+use crate::models::Channel;
 // handler.rs
-use crate::models::ChatMessage;
+use crate::{models::ChatMessage};
 use crate::state::AppState;
 use axum::{
     extract::{
@@ -7,7 +8,10 @@ use axum::{
         ws::{Message, WebSocket},
     },
     response::IntoResponse,
+    Json
 };
+
+
 use futures::{sink::SinkExt, stream::StreamExt};
 
 // 🚪 前台接待员：负责拦截升级 HTTP 请求
@@ -89,14 +93,17 @@ async fn handle_socket(socket: WebSocket, state: AppState, channel_name: String)
                                     let db_result = sqlx::query(
                                         "INSERT INTO messages (channel, username, content) VALUES ($1, $2, $3)"
                                     )
-                                    // ... 省略 bind ...
+                                    .bind(&parsed_msg.channel)
+                                    .bind(&parsed_msg.username)
+                                    .bind(&parsed_msg.content)
                                     .execute(&state.db)
                                     .await;
-
                                     if let Ok(_) = db_result {
                                         parsed_msg.created_at = Some(chrono::Utc::now());
-                                        // 存库成功后，用大喇叭把这句话广播给全频道的人
                                         let _ = tx.send(parsed_msg);
+                                    } else if let Err(e) = db_result {
+                                        // 💡 加上这一行，如果数据库报错，你就能在黑窗口看到了！
+                                        println!("❌ 数据库写入失败: {}", e);
                                     }
                                 }
                                 Err(e) => println!("❌ 解析失败: {}", e),
@@ -119,4 +126,14 @@ async fn handle_socket(socket: WebSocket, state: AppState, channel_name: String)
             }
         }
     }
+}
+
+
+pub async fn get_channels(State(state):State<AppState>)-> Json<Vec<Channel>> {
+    let channels = sqlx::query_as::<_, Channel>("SELECT * FROM channels")
+        .fetch_all(&state.db)
+        .await
+        .unwrap();
+
+    Json(channels)
 }
