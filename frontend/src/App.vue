@@ -1,48 +1,76 @@
-<template>
-  <div class="app-container">
-    <div v-if="!isJoined" class="join-modal">
-      <h2>欢迎来到类 Slack 聊天室</h2>
-      <input v-model="username" placeholder="请输入你的昵称..." @keyup.enter="joinChat" />
-      <button @click="joinChat">开始聊天</button>
+ <template>
+  <div class="w-screen h-screen bg-base-200">
+    
+    <div v-if="!isJoined" class="flex w-full h-full items-center justify-center">
+      <div class="card bg-base-100 shadow-xl p-10 flex flex-col gap-4 text-center">
+        <h2 class="text-2xl font-bold">欢迎来到类 Slack 聊天室</h2>
+        <input 
+          v-model="username" 
+          class="input input-bordered w-full" 
+          placeholder="请输入你的昵称..." 
+          @keyup.enter="joinChat" 
+        />
+        <button class="btn btn-primary shadow-lg hover:scale-105" @click="joinChat">
+          开始聊天
+        </button>
+      </div>
     </div>
 
-    <div v-else class="chat-room">
-      <aside class="sidebar">
-        <div class="sidebar-header">频道列表</div>
-        <div 
-          v-for="ch in channelList" 
-          :key="ch.id" 
-          class="channel-item"
-          :class="{ active: currentChannel === ch.name }"
-          @click="switchChannel(ch.name)"
-        >
-          # {{ ch.name }}
-        </div>
-      </aside>
+    <div v-else class="flex w-full h-full">
+      <Sidebar 
+        :channels="channelList" 
+        :activeChannel="currentChannel" 
+        @select-channel="switchChannel" 
+      />
 
-      <main class="chat-main">
-        <header>当前频道：#{{ currentChannel }} | 用户：{{ username }}</header>
+      <main class="flex-1 flex flex-col bg-base-100">
+        <header class="p-4 border-b border-base-300 font-bold shadow-sm">
+          当前频道：#{{ currentChannel }} | 用户：{{ username }}
+        </header>
         
-        <div class="message-list">
-          <div v-for="msg in messages" :key="msg.id" class="message-box">
-            <strong class="user-name"> {{ msg.username }}: </strong>
-            <span class="message-text">{{ msg.content }}</span>
-            <span class="message-time">[{{ formatTime(msg.created_at) }}]</span>
+        <div ref="messageContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
+          <div 
+            v-for="msg in messages" 
+            :key="msg.id" 
+            class="chat"
+            :class="msg.username === username ? 'chat-end' : 'chat-start'"
+          >
+            <div class="chat-header mb-1">
+              {{ msg.username }}
+              <time class="text-xs opacity-50 ml-1">{{ formatTime(msg.created_at) }}</time>
+            </div>
+
+            <div 
+              class="chat-bubble shadow-md" 
+              :class="msg.username === username ? 'chat-bubble-primary' : ''"
+            >
+              {{ msg.content }}
+            </div>
+
+            <div class="chat-footer opacity-50 text-xs mt-1">
+              已送达
+            </div>
           </div>
         </div>
 
-        <div class="input-area">
-          <input v-model="newMessage" placeholder="想说点什么..." @keyup.enter="sendMessage" />
-          <button @click="sendMessage">发送</button>
+        <div class="p-4 bg-base-200 flex gap-2">
+          <input 
+            v-model="newMessage" 
+            class="input input-bordered flex-1" 
+            placeholder="想说点什么..." 
+            @keyup.enter="sendMessage" 
+          />
+          <button class="btn btn-primary" @click="sendMessage">发送</button>
         </div>
       </main>
     </div>
+    
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-
+import { ref, onMounted, nextTick} from 'vue'
+import Sidebar from './components/Sidebar.vue'
 const username = ref('')
 const newMessage = ref('')
 const isJoined = ref(false)
@@ -50,6 +78,7 @@ const messages = ref([])
 const currentChannel = ref('general') // 默认进入 general
 const channelList = ref([])
 let socket = null
+const messageContainer = ref(null)
 
 // 🔄 切换频道的“四步走”逻辑
 const switchChannel = (newName) => {
@@ -69,6 +98,7 @@ const joinChat = () => {
   socket.onmessage = (event) => {
     const message = JSON.parse(event.data)
     messages.value.push(message)
+    scrollToBottom()
   }
 }
 
@@ -110,28 +140,12 @@ const formatTime = (isoString) => {
   })
 }
 
+const scrollToBottom = async () => {
+  await nextTick() 
+  if (messageContainer.value) {
+    messageContainer.value.scrollTop = messageContainer.value.scrollHeight
+  }
+}
+
 </script>
 
-<style>
-/* 核心布局 CSS */
-.chat-room {
-  display: flex; /* 开启左右并排模式 ↔️ */
-  height: 90vh;
-}
-.sidebar {
-  width: 200px;
-  background: #3f0e40; /* Slack 经典紫 🟣 */
-  color: white;
-  padding: 10px;
-}
-.channel-item {
-  padding: 8px;
-  cursor: pointer;
-  border-radius: 4px;
-}
-.channel-item:hover { background: #522653; }
-.channel-item.active { background: #1164a3; } /* 你刚才选中的蓝色亮起！🟦 */
-.chat-main { flex: 1; display: flex; flex-direction: column; }
-.message-list { flex: 1; overflow-y: auto; padding: 20px; }
-/* 其他样式省略... */
-</style>

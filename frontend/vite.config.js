@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import tailwindcss from "@tailwindcss/vite"
 
 
 // // 本地开发打开
@@ -19,7 +20,10 @@ import vue from '@vitejs/plugin-vue'
 
 // 远程开发打开
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    tailwindcss(),
+  ],
   server: {
     host: '0.0.0.0', // 监听所有地址
     port: 5173,
