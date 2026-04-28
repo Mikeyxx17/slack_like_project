@@ -2,10 +2,14 @@ mod handler;
 mod models;
 mod state;
 
-use axum::{Router, routing::get};
+use axum::{
+    Router,
+    routing::{get, post},
+};
 use dashmap::DashMap;
 use dotenvy::dotenv;
-use handler::{get_channels, ws_handler};
+use handler::get_channels;
+use handler::{create_channel, ws_handler};
 use sqlx::postgres::PgPoolOptions;
 use state::AppState;
 use std::env;
@@ -56,7 +60,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/ws/{channel}", get(ws_handler))
-        .route("/api/channels", get(get_channels))
+        .route("/api/channels", get(get_channels).post(create_channel))
         .layer(cors)
         .with_state(state);
 

@@ -21,6 +21,7 @@
         :channels="channelList" 
         :activeChannel="currentChannel" 
         @select-channel="switchChannel" 
+        @refresh-channels="fetchChannels" 
       />
 
       <main class="flex-1 flex flex-col bg-base-100">

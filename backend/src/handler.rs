@@ -14,6 +14,11 @@ use axum::{
 
 use futures::{sink::SinkExt, stream::StreamExt};
 
+#[derive(serde::Deserialize)]
+pub struct CreateChannelInput {
+    pub name: String,
+}
+
 // 🚪 前台接待员：负责拦截升级 HTTP 请求
 pub async fn ws_handler(
     ws: Ws,
@@ -136,4 +141,25 @@ pub async fn get_channels(State(state):State<AppState>)-> Json<Vec<Channel>> {
         .unwrap();
 
     Json(channels)
+}
+
+
+// 📮 2. 编写处理“新建频道”的搬运工
+pub async fn create_channel(
+    State(state): State<AppState>,
+    Json(input): Json<CreateChannelInput>,
+) -> axum::http::StatusCode {
+    // 💡 执行 SQL 插入操作
+    let result = sqlx::query!(
+        "INSERT INTO channels (name) VALUES ($1) ON CONFLICT (name) DO NOTHING",
+        input.name
+    )
+    .execute(&state.db)
+    .await;
+
+    // 🚦 根据数据库执行结果返回不同的“红绿灯”状态码
+    match result {
+        Ok(_) => axum::http::StatusCode::CREATED, // 🟢 201 成功创建
+        Err(_) => axum::http::StatusCode::INTERNAL_SERVER_ERROR, // 🔴 500 服务器报错
+    }
 }
