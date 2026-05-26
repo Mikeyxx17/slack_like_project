@@ -1,0 +1,125 @@
+<template>
+  <div class="min-h-screen flex items-center justify-center relative overflow-hidden bg-base-100">
+    <!-- 装饰光晕 — 使用主题色，随 daisyUI 主题变化 -->
+    <div class="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-primary/12 rounded-full blur-[120px] animate-pulse" />
+    <div class="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-secondary/10 rounded-full blur-[120px] animate-pulse" style="animation-delay: 1.5s" />
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent/10 rounded-full blur-[150px]" />
+
+    <!-- 卡片 -->
+    <div class="relative z-10 w-full max-w-md mx-4">
+      <div class="card bg-base-100/70 backdrop-blur-2xl border border-base-300/40 shadow-2xl">
+        <div class="card-body items-center text-center gap-6 p-10">
+          <!-- Logo -->
+          <div class="mb-1">
+            <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-xl shadow-primary/25 hover:scale-105 transition-transform duration-500">
+              <svg class="w-10 h-10 text-primary-content" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                  d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+              </svg>
+            </div>
+          </div>
+
+          <h1 class="text-3xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            SlackChat
+          </h1>
+          <p class="text-base-content/50 -mt-2 text-sm font-medium">高效协作，即时连接</p>
+
+          <div class="divider divider-neutral/20 my-0"></div>
+
+          <!-- 主题选择器 -->
+          <div class="dropdown dropdown-top w-full">
+            <div tabindex="0" role="button" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-base-content/60 bg-base-200/50 border border-base-300 hover:bg-base-200 transition-colors cursor-pointer w-full">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+              </svg>
+              <span class="truncate">{{ themeLabel }}</span>
+              <svg class="w-3 h-3 ml-auto shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+              </svg>
+            </div>
+            <ul tabindex="0" class="dropdown-content z-50 menu p-1.5 shadow-xl bg-base-200 rounded-xl border border-base-300/50 w-full mb-1 max-h-60 overflow-y-auto">
+              <li v-for="t in themes" :key="t.value">
+                <a
+                  class="text-xs py-2 rounded-lg"
+                  :class="theme === t.value ? 'bg-primary/15 text-primary font-semibold' : ''"
+                  @click="theme = t.value"
+                >{{ t.label }}</a>
+              </li>
+            </ul>
+          </div>
+
+          <!-- 用户名输入 -->
+          <div class="form-control w-full">
+            <label class="label pb-1.5">
+              <span class="label-text text-base-content/60 text-xs font-semibold uppercase tracking-wider">你的昵称</span>
+            </label>
+            <div class="flex items-center gap-3 h-12 px-4 rounded-field border-2 border-base-300 bg-base-200/60 focus-within:border-primary focus-within:bg-base-100 transition-all duration-200 w-full">
+              <svg class="w-5 h-5 text-base-content/35 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" />
+              </svg>
+              <input
+                v-model="name"
+                class="grow text-base bg-transparent outline-none placeholder:text-base-content/30"
+                placeholder="输入昵称开始聊天..."
+                maxlength="20"
+                @keyup.enter="doJoin"
+              />
+            </div>
+          </div>
+
+          <!-- 加入按钮 -->
+          <button
+            class="btn btn-primary h-12 w-full text-base rounded-field"
+            :class="name.trim() ? 'hover:scale-[1.02]' : ''"
+            @click="doJoin"
+            :disabled="!name.trim()"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+            加入聊天
+          </button>
+
+          <p class="text-[11px] text-base-content/30">
+            Enter 快速加入 · 欢乐交流，文明发言
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed } from 'vue'
+import { useAppState } from '../composables/useAppState'
+
+const { join, theme } = useAppState()
+const name = ref('')
+
+const doJoin = () => {
+  if (name.value.trim()) join(name.value)
+}
+
+const themes = [
+  { value: 'dark', label: '🌙 深色' },
+  { value: 'light', label: '☀️ 浅色' },
+  { value: 'cyberpunk', label: '🤖 赛博朋克' },
+  { value: 'cupcake', label: '🧁 纸杯蛋糕' },
+  { value: 'synthwave', label: '🌴 合成波' },
+  { value: 'nord', label: '❄️ 北欧风' },
+  { value: 'sunset', label: '🌅 日落' },
+  { value: 'winter', label: '⛄ 冬季' },
+  { value: 'coffee', label: '☕ 咖啡' },
+  { value: 'lemonade', label: '🍋 柠檬水' },
+  { value: 'luxury', label: '👑 奢华金' },
+  { value: 'business', label: '💼 商务' },
+  { value: 'autumn', label: '🍂 秋季' },
+  { value: 'dim', label: '💜 暗紫' },
+]
+
+const themeLabel = computed(() => {
+  const t = themes.find(t => t.value === theme.value)
+  return t ? t.label : '🌙 深色'
+})
+</script>

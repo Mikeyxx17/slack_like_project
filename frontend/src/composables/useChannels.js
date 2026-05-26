@@ -1,0 +1,36 @@
+import { ref } from 'vue'
+
+// ── 全局单例状态 ──
+const channels = ref([])
+const loading = ref(false)
+
+export function useChannels() {
+  const fetchChannels = async () => {
+    loading.value = true
+    try {
+      const res = await fetch('/api/channels')
+      if (res.ok) {
+        channels.value = await res.json()
+      }
+    } catch (err) {
+      console.error('获取频道列表失败:', err)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const createChannel = async (name) => {
+    const res = await fetch('/api/channels', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    })
+    if (res.ok) {
+      await fetchChannels()
+      return true
+    }
+    return false
+  }
+
+  return { channels, loading, fetchChannels, createChannel }
+}
