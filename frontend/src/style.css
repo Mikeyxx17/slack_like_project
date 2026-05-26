@@ -1,0 +1,79 @@
+@import "tailwindcss";
+@import "daisyui/daisyui.css";
+
+/* ═══════════════════ 全局自定义样式 ═══════════════════ */
+
+/* 自定义滚动条（全局） */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(var(--b3));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(var(--bc) / 0.2);
+}
+
+/* Firefox 滚动条 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(var(--b3)) transparent;
+}
+
+/* 消息气泡阴影增强（在 DaisyUI chat-bubble 基础上） */
+.chat-bubble {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* 输入框聚焦时外发光 */
+.input:focus-within {
+  box-shadow: 0 0 0 3px oklch(var(--p) / 0.1);
+}
+
+/* 按钮点击波纹 */
+.btn:active {
+  transform: scale(0.96);
+}
+
+/* 平滑过渡 */
+* {
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* 恢复不需要过渡的元素 */
+.no-transition,
+input,
+textarea,
+select,
+button,
+a,
+path {
+  transition-duration: 0s;
+}
+
+.btn,
+.input,
+.card {
+  transition-duration: 150ms !important;
+}
+
+/* 选中文本颜色 */
+::selection {
+  background: oklch(var(--p) / 0.3);
+  color: oklch(var(--pc));
+}
+
+/* 模态框背景模糊 */
+.modal-backdrop {
+  backdrop-filter: blur(8px);
+}
