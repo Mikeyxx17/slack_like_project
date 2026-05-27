@@ -1,13 +1,16 @@
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, watch } from 'vue'
 import { useAppState } from './useAppState'
+import { useChannels } from './useChannels'
 
 // ── 全局单例状态 ──
 const messages = ref([])
 const connected = ref(false)
 let socket = null
+let initialized = false
 
 export function useWebSocket() {
   const { currentChannel, isJoined } = useAppState()
+  const { fetchChannels } = useChannels()
 
   const connect = () => {
     disconnect()
@@ -15,13 +18,15 @@ export function useWebSocket() {
 
     const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
     const url = protocol + '//' + location.host + '/ws/' + currentChannel.value
-    socket = new WebSocket(url)
+    const ws = new WebSocket(url)
+    socket = ws
 
-    socket.onopen = () => {
+    ws.onopen = () => {
       connected.value = true
+      fetchChannels()
     }
 
-    socket.onmessage = (event) => {
+    ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data)
         messages.value.push(msg)
@@ -30,11 +35,13 @@ export function useWebSocket() {
       }
     }
 
-    socket.onclose = () => {
+    ws.onclose = () => {
+      if (socket === ws) socket = null
       connected.value = false
     }
 
-    socket.onerror = () => {
+    ws.onerror = () => {
+      if (socket === ws) socket = null
       connected.value = false
     }
   }
@@ -48,7 +55,7 @@ export function useWebSocket() {
   }
 
   const sendMessage = (content) => {
-    if (!socket || !content.trim()) return
+    if (!socket || socket.readyState !== WebSocket.OPEN || !content.trim()) return
     const { username } = useAppState()
     socket.send(JSON.stringify({
       channel: currentChannel.value,
@@ -57,26 +64,29 @@ export function useWebSocket() {
     }))
   }
 
-  // 频道切换时清空消息并重连
-  watch(currentChannel, () => {
-    messages.value = []
+  if (!initialized) {
+    initialized = true
+
+    watch(currentChannel, () => {
+      messages.value = []
+      if (isJoined.value) {
+        connect()
+      }
+    })
+
+    watch(isJoined, (joined) => {
+      if (joined) {
+        connect()
+      } else {
+        disconnect()
+      }
+    })
+
+    // watcher 注册时 isJoined 可能已经是 true（ChatLayout 在登录后才挂载）
     if (isJoined.value) {
       connect()
     }
-  })
-
-  // 加入聊天时建立连接
-  watch(isJoined, (joined) => {
-    if (joined) {
-      connect()
-    } else {
-      disconnect()
-    }
-  })
-
-  onUnmounted(() => {
-    disconnect()
-  })
+  }
 
   return { messages, connected, sendMessage, connect, disconnect }
 }
