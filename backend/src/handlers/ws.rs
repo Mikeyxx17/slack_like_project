@@ -20,23 +20,6 @@ pub async fn ws_handler(
 async fn handle_socket(socket: WebSocket, state: AppState, channel_name: String) {
     let tx = state.get_or_create_channel(channel_name.clone()).await;
 
-    let welcome_msg = ChatMessage {
-        id: None,
-        channel: channel_name.clone(),
-        username: "系统".to_string(),
-        content: format!("一位新伙伴加入了 #{} 聊天室", channel_name),
-        created_at: Some(chrono::Utc::now()),
-    };
-
-    let _ = sqlx::query("INSERT INTO messages (channel, username, content) VALUES ($1, $2, $3)")
-        .bind(&welcome_msg.channel)
-        .bind(&welcome_msg.username)
-        .bind(&welcome_msg.content)
-        .execute(&state.db)
-        .await;
-
-    let _ = tx.send(welcome_msg);
-
     let (mut sender, mut receiver) = socket.split();
     let mut rx = tx.subscribe();
 

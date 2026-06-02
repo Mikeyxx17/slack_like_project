@@ -1,13 +1,16 @@
 // 后端服务入口 — 启动引导、路由注册、服务器绑定
 
+mod auth;
 mod handlers;
 mod models;
 mod state;
-
-use axum::{Router, routing::get};
+use axum::{
+    Router,
+    routing::{get, post},
+};
 use dashmap::DashMap;
 use dotenvy::dotenv;
-use handlers::{create_channel, get_channels, ws_handler};
+use handlers::{create_channel, get_channels, get_current_user, login, register, ws_handler};
 use sqlx::postgres::PgPoolOptions;
 use state::AppState;
 use std::env;
@@ -55,6 +58,9 @@ async fn main() {
     let app = Router::new()
         .route("/ws/{channel}", get(ws_handler))
         .route("/api/channels", get(get_channels).post(create_channel))
+        .route("/api/login", post(login))
+        .route("/api/register", post(register))
+        .route("/api/me", get(get_current_user))
         .layer(cors)
         .with_state(state);
 

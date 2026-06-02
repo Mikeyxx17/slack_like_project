@@ -10,8 +10,13 @@ chrono = { version = "0.4.44", features = ["serde"] }
 dashmap = { version = "6.1.0", features = ["inline", "rayon", "serde"] }
 dotenvy = "0.15.7"
 futures = "0.3.32"
+jsonwebtoken = { version = "10.4.0", features = ["rust_crypto"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
-sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio-rustls", "chrono"] }
+sqlx = { version = "0.8.6", features = [
+    "postgres",
+    "runtime-tokio-rustls",
+    "chrono",
+] }
 tokio = { version = "1.52.1", features = ["full"] }
 tower-http = { version = "0.6.8", features = ["cors"] }

@@ -1,5 +1,8 @@
 <template>
-  <LoginView v-if="!isJoined" />
+  <div v-if="initializing" class="min-h-screen flex items-center justify-center bg-base-100">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+  </div>
+  <LoginView v-else-if="!isJoined" />
   <ChatLayout v-else />
 </template>
 
@@ -9,9 +12,8 @@ import { useChannels } from './composables/useChannels'
 import LoginView from './components/LoginView.vue'
 import ChatLayout from './components/ChatLayout.vue'
 
-const { isJoined } = useAppState()
+const { isJoined, initializing } = useAppState()
 
-// 应用启动时预加载频道列表和主题
 const { fetchChannels } = useChannels()
 fetchChannels()
 </script>

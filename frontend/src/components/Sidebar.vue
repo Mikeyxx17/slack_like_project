@@ -102,6 +102,16 @@
               在线
             </p>
           </div>
+          <button
+            v-if="token"
+            class="btn btn-ghost btn-xs text-base-content/40 hover:text-error shrink-0"
+            title="退出登录"
+            @click="logout"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>
@@ -114,7 +124,7 @@ import { computed } from 'vue'
 import { useAppState } from '../composables/useAppState'
 import { useChannels } from '../composables/useChannels'
 
-const { username, currentChannel, theme, switchChannel, showCreateModal } = useAppState()
+const { username, token, currentChannel, theme, switchChannel, showCreateModal, logout } = useAppState()
 const { channels, loading } = useChannels()
 
 const selectChannel = (name) => {

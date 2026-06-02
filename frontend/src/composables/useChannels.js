@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { useAppState } from './useAppState'
 
 // ── 全局单例状态 ──
 const channels = ref([])
@@ -20,9 +21,14 @@ export function useChannels() {
   }
 
   const createChannel = async (name) => {
+    const { token } = useAppState()
+    const headers = { 'Content-Type': 'application/json' }
+    if (token.value) {
+      headers['Authorization'] = `Bearer ${token.value}`
+    }
     const res = await fetch('/api/channels', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ name }),
     })
     if (res.ok) {

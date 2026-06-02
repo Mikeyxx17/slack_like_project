@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen flex items-center justify-center relative overflow-hidden bg-base-100">
-    <!-- 装饰光晕 — 使用主题色，随 daisyUI 主题变化 -->
+    <!-- 装饰光晕 -->
     <div class="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-primary/12 rounded-full blur-[120px] animate-pulse" />
     <div class="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-secondary/10 rounded-full blur-[120px] animate-pulse" style="animation-delay: 1.5s" />
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent/10 rounded-full blur-[150px]" />
@@ -8,7 +8,7 @@
     <!-- 卡片 -->
     <div class="relative z-10 w-full max-w-md mx-4">
       <div class="card bg-base-100/70 backdrop-blur-2xl border border-base-300/40 shadow-2xl">
-        <div class="card-body items-center text-center gap-6 p-10">
+        <div class="card-body items-center text-center gap-5 p-10">
           <!-- Logo -->
           <div class="mb-1">
             <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-xl shadow-primary/25 hover:scale-105 transition-transform duration-500">
@@ -23,6 +23,139 @@
             SlackChat
           </h1>
           <p class="text-base-content/50 -mt-2 text-sm font-medium">高效协作，即时连接</p>
+
+          <!-- 模式切换 tabs -->
+          <div class="tabs tabs-box bg-base-200/50 w-full">
+            <a
+              v-for="tab in tabs"
+              :key="tab.key"
+              class="tab flex-1 text-xs font-semibold"
+              :class="mode === tab.key ? 'tab-active' : ''"
+              @click="switchMode(tab.key)"
+            >{{ tab.label }}</a>
+          </div>
+
+          <!-- 登录表单 -->
+          <template v-if="mode === 'login'">
+            <div class="form-control w-full">
+              <label class="label pb-1.5">
+                <span class="label-text text-base-content/60 text-xs font-semibold uppercase tracking-wider">邮箱</span>
+              </label>
+              <input
+                v-model="loginEmail"
+                class="input input-bordered h-12 w-full bg-base-200/60"
+                placeholder="请输入邮箱"
+                type="email"
+                @keyup.enter="doLogin"
+              />
+            </div>
+            <div class="form-control w-full">
+              <label class="label pb-1.5">
+                <span class="label-text text-base-content/60 text-xs font-semibold uppercase tracking-wider">密码</span>
+              </label>
+              <input
+                v-model="loginPassword"
+                class="input input-bordered h-12 w-full bg-base-200/60"
+                placeholder="请输入密码"
+                type="password"
+                @keyup.enter="doLogin"
+              />
+            </div>
+            <button
+              class="btn btn-primary h-12 w-full text-base rounded-field"
+              :class="loginEmail.trim() && loginPassword ? 'hover:scale-[1.02]' : ''"
+              :disabled="!loginEmail.trim() || !loginPassword || authLoading"
+              @click="doLogin"
+            >
+              <span v-if="authLoading" class="loading loading-spinner loading-sm"></span>
+              <span v-else>登录</span>
+            </button>
+          </template>
+
+          <!-- 注册表单 -->
+          <template v-if="mode === 'register'">
+            <div class="form-control w-full">
+              <label class="label pb-1.5">
+                <span class="label-text text-base-content/60 text-xs font-semibold uppercase tracking-wider">用户名</span>
+              </label>
+              <input
+                v-model="regUsername"
+                class="input input-bordered h-12 w-full bg-base-200/60"
+                placeholder="请输入用户名"
+                maxlength="20"
+                @keyup.enter="doRegister"
+              />
+            </div>
+            <div class="form-control w-full">
+              <label class="label pb-1.5">
+                <span class="label-text text-base-content/60 text-xs font-semibold uppercase tracking-wider">邮箱</span>
+              </label>
+              <input
+                v-model="regEmail"
+                class="input input-bordered h-12 w-full bg-base-200/60"
+                placeholder="请输入邮箱"
+                type="email"
+                @keyup.enter="doRegister"
+              />
+            </div>
+            <div class="form-control w-full">
+              <label class="label pb-1.5">
+                <span class="label-text text-base-content/60 text-xs font-semibold uppercase tracking-wider">密码</span>
+              </label>
+              <input
+                v-model="regPassword"
+                class="input input-bordered h-12 w-full bg-base-200/60"
+                placeholder="请输入密码"
+                type="password"
+                @keyup.enter="doRegister"
+              />
+            </div>
+            <button
+              class="btn btn-secondary h-12 w-full text-base rounded-field"
+              :class="regUsername.trim() && regEmail.trim() && regPassword ? 'hover:scale-[1.02]' : ''"
+              :disabled="!regUsername.trim() || !regEmail.trim() || !regPassword || authLoading"
+              @click="doRegister"
+            >
+              <span v-if="authLoading" class="loading loading-spinner loading-sm"></span>
+              <span v-else>注册并登录</span>
+            </button>
+          </template>
+
+          <!-- 快速体验表单（保留旧功能） -->
+          <template v-if="mode === 'quick'">
+            <div class="form-control w-full">
+              <label class="label pb-1.5">
+                <span class="label-text text-base-content/60 text-xs font-semibold uppercase tracking-wider">你的昵称</span>
+              </label>
+              <div class="flex items-center gap-3 h-12 px-4 rounded-field border-2 border-base-300 bg-base-200/60 focus-within:border-primary focus-within:bg-base-100 transition-all duration-200 w-full">
+                <svg class="w-5 h-5 text-base-content/35 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" />
+                </svg>
+                <input
+                  v-model="name"
+                  class="grow text-base bg-transparent outline-none placeholder:text-base-content/30"
+                  placeholder="输入昵称开始聊天..."
+                  maxlength="20"
+                  @keyup.enter="doJoin"
+                />
+              </div>
+            </div>
+            <button
+              class="btn btn-primary h-12 w-full text-base rounded-field"
+              :class="name.trim() ? 'hover:scale-[1.02]' : ''"
+              @click="doJoin"
+              :disabled="!name.trim()"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+              加入聊天
+            </button>
+          </template>
+
+          <!-- 错误提示 -->
+          <p v-if="authError" class="text-error text-xs font-medium -mb-2">{{ authError }}</p>
 
           <div class="divider divider-neutral/20 my-0"></div>
 
@@ -48,41 +181,8 @@
             </ul>
           </div>
 
-          <!-- 用户名输入 -->
-          <div class="form-control w-full">
-            <label class="label pb-1.5">
-              <span class="label-text text-base-content/60 text-xs font-semibold uppercase tracking-wider">你的昵称</span>
-            </label>
-            <div class="flex items-center gap-3 h-12 px-4 rounded-field border-2 border-base-300 bg-base-200/60 focus-within:border-primary focus-within:bg-base-100 transition-all duration-200 w-full">
-              <svg class="w-5 h-5 text-base-content/35 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" />
-              </svg>
-              <input
-                v-model="name"
-                class="grow text-base bg-transparent outline-none placeholder:text-base-content/30"
-                placeholder="输入昵称开始聊天..."
-                maxlength="20"
-                @keyup.enter="doJoin"
-              />
-            </div>
-          </div>
-
-          <!-- 加入按钮 -->
-          <button
-            class="btn btn-primary h-12 w-full text-base rounded-field"
-            :class="name.trim() ? 'hover:scale-[1.02]' : ''"
-            @click="doJoin"
-            :disabled="!name.trim()"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-            加入聊天
-          </button>
-
           <p class="text-[11px] text-base-content/30">
-            Enter 快速加入 · 欢乐交流，文明发言
+            Enter 快速提交 · 欢乐交流，文明发言
           </p>
         </div>
       </div>
@@ -94,12 +194,55 @@
 import { ref, computed } from 'vue'
 import { useAppState } from '../composables/useAppState'
 
-const { join, theme } = useAppState()
+const { login, register, join, theme, authError } = useAppState()
+
+const mode = ref('login')
+const authLoading = ref(false)
+
+// ── 登录表单 ──
+const loginEmail = ref('')
+const loginPassword = ref('')
+
+const doLogin = async () => {
+  if (!loginEmail.value.trim() || !loginPassword.value) return
+  authLoading.value = true
+  await login(loginEmail.value.trim(), loginPassword.value)
+  authLoading.value = false
+}
+
+// ── 注册表单 ──
+const regUsername = ref('')
+const regEmail = ref('')
+const regPassword = ref('')
+
+const doRegister = async () => {
+  if (!regUsername.value.trim() || !regEmail.value.trim() || !regPassword.value) return
+  authLoading.value = true
+  const result = await register(regUsername.value.trim(), regEmail.value.trim(), regPassword.value)
+  if (result.ok) {
+    // 注册成功后自动登录
+    await login(regEmail.value.trim(), regPassword.value)
+  }
+  authLoading.value = false
+}
+
+// ── 快速体验（旧功能保留）──
 const name = ref('')
 
 const doJoin = () => {
   if (name.value.trim()) join(name.value)
 }
+
+const switchMode = (key) => {
+  mode.value = key
+  authError.value = ''
+}
+
+const tabs = [
+  { key: 'login', label: '登录' },
+  { key: 'register', label: '注册' },
+  { key: 'quick', label: '快速体验' },
+]
 
 const themes = [
   { value: 'dark', label: '🌙 深色' },
