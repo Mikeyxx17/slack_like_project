@@ -4,6 +4,6 @@ pub mod auth;
 pub mod channels;
 pub mod ws;
 
-pub use auth::register;
+pub use auth::{get_current_user, login, register};
 pub use channels::{create_channel, get_channels};
 pub use ws::ws_handler;

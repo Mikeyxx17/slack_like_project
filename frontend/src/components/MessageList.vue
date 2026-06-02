@@ -1,5 +1,5 @@
 <template>
-  <div ref="container" class="flex-1 min-h-0 overflow-y-auto scroll-smooth">
+  <div ref="container" class="flex-1 min-h-0 overflow-y-auto scroll-smooth" @scroll="onScroll">
     <!-- 空状态 -->
     <div v-if="messages.length === 0" class="flex flex-col items-center justify-center h-full text-base-content/20 gap-4">
       <svg class="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,7 +28,7 @@
         <MessageBubble v-else :message="msg" :isMine="msg.username === username" />
       </template>
 
-      <div class="h-2" />
+      <div ref="bottom" class="h-2" />
     </div>
   </div>
 </template>
@@ -39,25 +39,39 @@ import { useAppState } from '../composables/useAppState'
 import { useWebSocket } from '../composables/useWebSocket'
 import MessageBubble from './MessageBubble.vue'
 
-const { username } = useAppState()
+const { username, currentChannel } = useAppState()
 const { messages } = useWebSocket()
 const container = ref(null)
+const bottom = ref(null)
+let sticky = true
 
-// 自动滚动
-const scrollDown = () => {
-  nextTick(() => {
-    if (container.value) {
-      const el = container.value
-      const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 250
-      if (nearBottom || messages.value.length <= 3) {
-        el.scrollTop = el.scrollHeight
-      }
-    }
-  })
+// 滚到底部
+const goBottom = () => {
+  bottom.value?.scrollIntoView({ behavior: 'instant' })
 }
 
-watch(messages, scrollDown, { deep: true })
-onMounted(scrollDown)
+// 用户手动滚上去了 → 停止自动追随；滚回底部 → 重新追随
+const onScroll = () => {
+  if (!container.value) return
+  const el = container.value
+  sticky = el.scrollHeight - el.scrollTop - el.clientHeight < 50
+}
+
+// 有新消息时，仅当 sticky 才追随
+watch(messages, () => {
+  if (sticky) nextTick(goBottom)
+}, { deep: true })
+
+// 切频道 → 强制追随
+watch(currentChannel, () => {
+  sticky = true
+  nextTick(goBottom)
+})
+
+onMounted(() => {
+  sticky = true
+  nextTick(goBottom)
+})
 
 // 日期分隔线
 let lastDate = ''
